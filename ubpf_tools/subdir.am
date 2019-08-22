@@ -1,0 +1,162 @@
+
+noinst_LIBRARIES += ubpf_tools/libubpf.a
+
+sbin_PROGRAMS += \
+    ubpf_tools/ipfix_collector \
+    ubpf_tools/ipfix_exporter \
+    ubpf_tools/ebpf_injecter
+
+ubpf_tools_libubpf_a_SOURCES = \
+    ubpf/vm/ubpf_vm.c \
+    ubpf/vm/ubpf_loader.c \
+    ubpf/vm/ubpf_jit_x86_64.c \
+    ubpf_tools/map.c \
+    ubpf_tools/monitor_manager.c \
+    ubpf_tools/monitoring_server.c \
+    ubpf_tools/plugins_manager.c \
+    ubpf_tools/list.c \
+    ubpf_tools/queue.c \
+    ubpf_tools/ubpf_api.c \
+    ubpf_tools/ubpf_manager.c \
+    ubpf_tools/bgp_ipfix.c \
+    ubpf_tools/ipfix_collector.c \
+    ubpf_tools/bpf_plugin.c \
+    ubpf_tools/shared_memory.c \
+    ubpf_tools/decision_process_manager.c \
+    ubpf_tools/ubpf_context.c \
+    # end
+
+ubpf_tools_libubpf_a_CFLAGS = \
+    -I/usr/include/libmongoc-1.0 \
+    -I/usr/include/libbson-1.0 \
+    -I@top_srcdir@/ubpf/vm/inc \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib/glib-2.0/include \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib64/glib-2.0/include \
+    -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
+    -fPIC -DPIC
+
+
+
+ubpf_tools_ipfix_collector_SOURCES = \
+    ubpf_tools/main_ipfix_collector.c \
+    ubpf_tools/bgp_ipfix.c \
+    ubpf_tools/ipfix_collector.c
+
+
+ubpf_tools_ipfix_collector_CFLAGS = \
+    -I@top_srcdir@ \
+    -I/usr/include/libmongoc-1.0 \
+    -I/usr/include/libbson-1.0 \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib/glib-2.0/include \
+    -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib64/glib-2.0/include
+
+
+ubpf_tools_ipfix_collector_LDFLAGS = \
+    -lmongoc-1.0 \
+    -lbson-1.0 \
+    -lfixbuf -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now \
+    -lsctp \
+    -lpthread \
+    -lgthread-2.0 \
+    -pthread \
+    -lglib-2.0 \
+    -ljson-c
+
+
+ubpf_tools_ipfix_exporter_SOURCES = \
+    ubpf_tools/main_ipfix_exporter.c \
+    ubpf_tools/monitor_manager.c \
+    ubpf_tools/monitoring_server.c \
+    ubpf_tools/map.c \
+    ubpf_tools/queue.c \
+    ubpf_tools/list.c \
+    ubpf_tools/bgp_ipfix.c \
+    ubpf_tools/plugins_manager.c \
+    ubpf_tools/plugins_manager.h \
+    ubpf_tools/ubpf_manager.c \
+    ubpf_tools/ubpf_manager.h \
+    ubpf_tools/bpf_plugin.c \
+    ubpf_tools/bpf_plugin.h \
+    ubpf_tools/shared_memory.c \
+    ubpf_tools/shared_memory.h \
+    ubpf_tools/decision_process_manager.c
+
+
+ubpf_tools_ipfix_exporter_CFLAGS = \
+    -I@top_srcdir@ \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib/glib-2.0/include \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
+    -I/usr/lib64/glib-2.0/include
+
+
+ubpf_tools_ipfix_exporter_LDFLAGS = \
+    -L@top_srcdir@/bgpd \
+    -L@top_srcdir@/lib \
+    -L@top_srcdir@/ubpf_tools \
+    -lpthread \
+    -pthread \
+    -lfixbuf -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now \
+    -lsctp \
+    -lglib-2.0 \
+    -ljson-c \
+    -lubpf \
+    -lfrr \
+    -lbgp \
+    #end
+
+ubpf_tools_ebpf_injecter_SOURCES = \
+    ubpf_tools/include/plugins_manager.h \
+    ubpf_tools/include/ubpf_manager.h \
+    ubpf_tools/bgp_ipfix.h \
+    ubpf_tools/bgp_ipfix.c \
+    ubpf_tools/map.h \
+    ubpf_tools/map.c \
+    ubpf_tools/include/ubpf_api.h \
+    ubpf_tools/ubpf_api.c \
+    ubpf_tools/ubpf_manager.c \
+    ubpf_tools/plugins_manager.c \
+    ubpf_tools/shared_memory.c \
+    ubpf_tools/shared_memory.h \
+    ubpf_tools/bpf_plugin.c \
+    ubpf_tools/bpf_plugin.h \
+    ubpf_tools/list.c \
+    ubpf_tools/list.h \
+    ubpf/vm/ubpf_vm.c \
+    ubpf/vm/ubpf_loader.c \
+    ubpf/vm/ubpf_jit_x86_64.c \
+    ubpf_tools/ebpf_injecter.c \
+    ubpf_tools/decision_process_manager.c \
+    ubpf_tools/decision_process_manager.h \
+    ubpf_tools/ubpf_context.c \
+    # end
+
+ubpf_tools_ebpf_injecter_CFLAGS = \
+    -I@top_srcdir@ \
+    -I@top_srcdir@/ubpf_tools/include \
+    -I@top_srcdir@/ubpf/vm/inc \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib/glib-2.0/include \
+    -I/usr/lib/x86_64-linux-gnu/glib-2.0/include \
+    -I/usr/include/glib-2.0 \
+    -I/usr/lib64/glib-2.0/include
+
+ubpf_tools_ebpf_injecter_LDFLAGS = \
+    -L@top_srcdir@/bgpd \
+    -L@top_srcdir@/lib \
+    -lfixbuf \
+    -lsctp \
+    -lpthread \
+    -lgthread-2.0 \
+    -pthread \
+    -lglib-2.0 \
+    -lfrr \
+    -lbgp \
+    -ljson-c \
+    -Wl,-O2,--sort-common,--as-needed,-z,relro,-z,now
