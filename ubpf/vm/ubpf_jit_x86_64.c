@@ -33,7 +33,8 @@
 
 static void muldivmod(struct jit_state *state, uint16_t pc, uint8_t opcode, int src, int dst, int32_t imm);
 
-#define REGISTER_MAP_SIZE 11
+/* Create R11 to perform memory bounds checks */
+#define REGISTER_MAP_SIZE 13
 static int register_map[REGISTER_MAP_SIZE] = {
     RAX,
     RDI,
@@ -46,6 +47,8 @@ static int register_map[REGISTER_MAP_SIZE] = {
     R14,
     R15,
     RBP,
+    RCX,
+    R12, /* preserved register */
 };
 
 /* Return the x86 register for the given eBPF register */
@@ -84,6 +87,7 @@ translate(struct ubpf_vm *vm, struct jit_state *state, char **errmsg)
 {
     emit_push(state, RBP);
     emit_push(state, RBX);
+    emit_push(state, R12);
     emit_push(state, R13);
     emit_push(state, R14);
     emit_push(state, R15);
@@ -358,9 +362,12 @@ translate(struct ubpf_vm *vm, struct jit_state *state, char **errmsg)
             emit_jcc(state, 0x8e, target_pc);
             break;
         case EBPF_OP_CALL:
+            /* Save R12, call may alter this register */
+            emit_push(state, R12);
             /* We reserve RCX for shifts */
             emit_mov(state, R9, RCX);
             emit_call(state, vm->ext_funcs[inst.imm]);
+            emit_pop(state, R12);
             break;
         case EBPF_OP_EXIT:
             if (i != vm->num_insts - 1) {
@@ -434,6 +441,7 @@ translate(struct ubpf_vm *vm, struct jit_state *state, char **errmsg)
     emit_pop(state, R15);
     emit_pop(state, R14);
     emit_pop(state, R13);
+    emit_pop(state, R12);
     emit_pop(state, RBX);
     emit_pop(state, RBP);
 
@@ -459,20 +467,24 @@ muldivmod(struct jit_state *state, uint16_t pc, uint8_t opcode, int src, int dst
     bool div = (opcode & EBPF_ALU_OP_MASK) == (EBPF_OP_DIV_IMM & EBPF_ALU_OP_MASK);
     bool mod = (opcode & EBPF_ALU_OP_MASK) == (EBPF_OP_MOD_IMM & EBPF_ALU_OP_MASK);
     bool is64 = (opcode & EBPF_CLS_MASK) == EBPF_CLS_ALU64;
+    bool reg = (opcode & EBPF_SRC_REG) == EBPF_SRC_REG;
 
-    if (div || mod) {
+    if ((div || mod) && (reg || imm == 0)) {
         emit_load_imm(state, RCX, pc);
 
         /* test src,src */
-        if (is64) {
+        if (reg && is64) {
             emit_alu64(state, 0x85, src, src);
-        } else {
+        } else if (reg) {
+            emit_alu32(state, 0x85, src, src);
+        } else { /* imm == 0 */
+            emit_load_imm(state, src, imm);
             emit_alu32(state, 0x85, src, src);
         }
 
         /* jz div_by_zero */
         emit_jcc(state, 0x84, TARGET_PC_DIV_BY_ZERO);
-    }
+    } // else: no check to do: if this is a div, it is immediate with imm != 0, so no is check needed
 
     if (dst != RAX) {
         emit_push(state, RAX);
@@ -557,7 +569,7 @@ ubpf_compile(struct ubpf_vm *vm, char **errmsg)
     }
 
     state.offset = 0;
-    state.size = 65536;
+    state.size = 4*65536;
     state.buf = calloc(state.size, 1);
     state.pc_locs = calloc(MAX_INSTS+1, sizeof(state.pc_locs[0]));
     state.jumps = calloc(MAX_INSTS, sizeof(state.jumps[0]));
