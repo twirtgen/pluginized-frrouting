@@ -1,5 +1,20 @@
-FRRouting
-=========
+**This repo is now archived**. It contains the first prototype 
+of the pluginization of BGP and OSPFv2.
+
+We are currently developping a generic approach that enables developpers
+to easily "pluginize" a routing protocol via a library that includes all
+the elements needed to run the eBPF Virtual Machine.
+
+The repo [libubpf](https://bitbucket.org/twirtgen/ubpf_tools) contains
+the library to be included in a routing protocol.
+
+You can look at [pluginized_frr](https://bitbucket.org/twirtgen/pluginized_frr)
+or [pluginized_bird](https://bitbucket.org/twirtgen/pluginized_bird) to check
+how to include [libubpf](https://bitbucket.org/twirtgen/ubpf_tools) inside
+an existing BGP implementation.
+
+Pluginized FRRouting
+====================
 
 FRR is free software that implements and manages various IPv4 and IPv6 routing
 protocols. It runs on nearly all distributions of Linux and BSD as well as
